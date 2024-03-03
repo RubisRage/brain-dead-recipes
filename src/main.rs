@@ -19,7 +19,7 @@ async fn main() {
     let app = Router::new()
         .route("/", get(index))
         .route("/recipe", get(recipe_form))
-        .nest_service("/assets", ServeDir::new("assets"));
+        .nest_service("/assets", ServeDir::new("dist"));
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
     axum::serve(listener, app).await.unwrap();
