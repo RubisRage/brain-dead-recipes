@@ -35,7 +35,13 @@
                 </div>
         </div>
 
-        <input is='ingredient-input'/>
+        <ingredient-input/>
     </form>
 </main>
+
+<template id="ingredients">
+    {% for ingredient in ingredients %}
+        <option>{{ingredient}}</option>
+    {% endfor %}
+</template>
 {% endblock %}

@@ -6,7 +6,8 @@ export default class IngredientInput extends HTMLInputElement {
     }
 
     connectedCallback() {
-        console.log("Im aliveeee")
+        let template = document.getElementById('ingredients') as HTMLTemplateElement;
+        this.appendChild(template.content);
     }
 
 }

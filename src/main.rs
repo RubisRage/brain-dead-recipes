@@ -11,7 +11,12 @@ async fn index() -> Index {
 }
 
 async fn recipe_form() -> RecipeForm {
-    RecipeForm {}
+    let ingredients = vec!["Flour", "Sugar", "Eggs", "Milk"]
+        .iter()
+        .map(|s| s.to_string())
+        .collect();
+
+    RecipeForm { ingredients }
 }
 
 #[tokio::main]

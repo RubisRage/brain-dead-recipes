@@ -6,4 +6,6 @@ pub struct Index {}
 
 #[derive(Template)]
 #[template(path = "recipe-form.html")]
-pub struct RecipeForm {}
+pub struct RecipeForm {
+    pub ingredients: Vec<String>,
+}
