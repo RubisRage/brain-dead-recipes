@@ -10,15 +10,13 @@ export default class IngredientInput extends HTMLElement {
     private selectMenu: HTMLElement;
     private selected: HTMLElement;
 
-    private isFocused: boolean = false;
-
     constructor() {
         super()
         this.shadow = this.attachShadow({ mode: 'open' });
     }
 
     connectedCallback() {
-        let template = document
+        const template = document
             .getElementById('ingredient-input-template') as HTMLTemplateElement;
 
         this.shadow.appendChild(template.content.cloneNode(true));
@@ -36,11 +34,14 @@ export default class IngredientInput extends HTMLElement {
             'input', () => this.filterIngredients()
         );
 
+        const ingredientsTemplate = document
+            .getElementById('ingredients-template') as HTMLTemplateElement;
+
+        const ingredientsContent = ingredientsTemplate
+            .content.cloneNode(true) as HTMLElement;
+
         this.ingredients = Array.from(
-            (document
-                .getElementById('ingredients-template') as HTMLTemplateElement)
-                .content
-                .children as HTMLCollectionOf<HTMLOptionElement>
+            ingredientsContent.children as HTMLCollectionOf<HTMLOptionElement>
         );
 
         this.selected = this.shadow
@@ -48,34 +49,39 @@ export default class IngredientInput extends HTMLElement {
 
         this.selected.innerText = this.ingredients[0]?.innerText ?? "No hay ingredientes todavía!";
 
-        this.selected.addEventListener('click', () => {
-            this.isFocused = !this.isFocused;
-
-            if (this.isFocused) {
-                this.selectMenu.style.display = 'block';
-            } else {
-                this.selectMenu.style.display = 'none';
-            }
-        })
-
         this.ingredientsSelect = this
             .shadow
             .getElementById('ingredients-select') as HTMLElement;
 
         this.ingredientsSelect.append(...this.ingredients);
 
+        this.addVisibilityCallbacks()
+    }
+
+    private addVisibilityCallbacks() {
+        this.selected.addEventListener('focus', () => {
+            this.selectMenu.style.display = 'block';
+        })
+
+        this.selected.addEventListener('blur', (e: FocusEvent) => {
+            if (!this.shadow.contains(e.relatedTarget as Node)) {
+                this.selectMenu.style.display = 'none';
+            }
+        })
+
+        this.selectMenu.addEventListener('focusout', () => {
+            this.selectMenu.style.display = 'none';
+        })
     }
 
     filterIngredients() {
-        let ingredients = this.ingredients;
-        let filter = this.filterInput.value.toLowerCase();
+        const filter = this.filterInput.value.toLowerCase();
 
-        let filtered = ingredients.filter((ingredient) => {
+        const filtered = this.ingredients.filter((ingredient) => {
             return ingredient.innerText.toLowerCase().includes(filter);
         })
 
-        this.ingredientsSelect.innerHTML = '';
-        this.ingredientsSelect.append(...filtered);
+        this.ingredientsSelect.replaceChildren(...filtered);
     }
 
 }

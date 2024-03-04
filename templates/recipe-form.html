@@ -1,8 +1,11 @@
 {% extends "base.html" %}
 
-{% block title %} Recipe Form {% endblock %}
+{% block title %} New recipe {% endblock %}
 
 {% block content %}
+
+{% include "ingredient-input.html" %}
+
 <main class="flex h-svh justify-center">
     <form class="flex flex-col w-1/2 gap-4">
         <div class="sm:col-span-4">
@@ -23,37 +26,25 @@
             </div>
         </div>
 
-        <div class="sm:col-span-4">
+        <div id="ingredients" class="sm:col-span-4">
             <label for="diners-number" class="block text-sm font-medium leading-6 text-gray-900">Ingredientes</label>
-            <ingredient-input id="first">
-            <ingredient-input id="second">
+
+            <ingredient-input id="first"></ingredient-input>
+
+            <div class="mt-2" id="add-ingredient-input">
+                <div class="flex rounded-md shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-inset focus-within:ring-indigo-600 sm:max-w-md">
+                    <button type="button" onclick="addIngredientInput()"  class="h-6 w-full bg-indigo-600 text-white rounded-md shadow-sm">Nuevo ingrediente</button>
+                </div>
+            </div>
         </div>
     </form>
 </main>
 
-<template id="ingredient-input-template">
-    <link href="assets/style.css" rel="stylesheet">
+<script>
+    function addIngredientInput() {
+        const ingredientInput = document.createElement('ingredient-input');
+        document.querySelector('#ingredients').insertBefore(ingredientInput, document.getElementById('add-ingredient-input'));
+    }
+</script>
 
-    <div class="mt-2">
-        <div class="flex rounded-md shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-inset focus-within:ring-indigo-600 sm:max-w-md">
-            <button id="selected" class="h-6 w-full"></button>
-        </div>
-    </div>
-
-    <div id="menu" class="hidden">
-        <div class="mt-2">
-            <div class="flex rounded-md shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-inset focus-within:ring-indigo-600 sm:max-w-md">
-              <input id="filter" type="text" class="block flex-1 border-0 bg-transparent py-1.5 pl-1 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm sm:leading-6"/>
-            </div>
-        </div>
-
-        <div id="ingredients-select" class="flex flex-col"></div>
-    </div>
-</template>
-
-<template id="ingredients-template">
-    {% for ingredient in ingredients %}
-        <option>{{ ingredient }}</option>
-    {% endfor %}
-</template>
 {% endblock %}
