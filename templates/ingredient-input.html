@@ -24,7 +24,9 @@
                 </div>
             </div>
 
-            <div id="ingredients-select" class="overflow-auto h-32 flex flex-col"></div>
+            <hr class="mt-2 h-2 bg-grey-500">
+
+            <div tabindex="0" id="ingredients-select" class="flex flex-col divide-y overflow-auto h-32"></div>
         </div>
     </div>
 </template>
@@ -32,9 +34,12 @@
 <template id="ingredients-template">
     {% for (i, ingredient) in ingredients.iter().enumerate() %}
         <div>
-            <label for="ingredient-{{ i }}" class="cursor-pointer">
-                <input type="checkbox" id="ingredient-{{ i }}" name="ingredient" value="{{ ingredient }}" class="focus:bg-indigo-300 bg-ind" /> {{ ingredient }}
-            </label>
+            <button class="group w-full h-full rounded-md text-left pl-1  hover:text-white hover:bg-indigo-200 [&.selected]:text-white [&.selected]:bg-indigo-400">
+                {{ ingredient }}
+                <svg class="hidden float-end ml-auto mr-2 group-[.selected]:inline stroke-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="1.5rem" height="1.5rem" fill="none" stroke="black" stroke-width="2">
+                  <path d="M5 13l4 4L19 7"></path>
+                </svg>
+            </button>
         </div>
     {% endfor %}
 </template>

@@ -45,9 +45,8 @@ export default class IngredientInput extends HTMLElement {
         );
 
         this.ingredients
-            .forEach((ingredient) => {
-                const input = ingredient.querySelector('input') as HTMLInputElement;
-                input.addEventListener('click', (e) => this.setIngredient(e))
+            .forEach((ingredientButton) => {
+                ingredientButton.addEventListener('click', (e) => this.setIngredient(e))
             })
 
         this.selectedText = this.shadow
@@ -70,29 +69,32 @@ export default class IngredientInput extends HTMLElement {
         })
 
         this.selectedText.addEventListener('blur', (e: any) => {
-            if (this.shadow.contains(e.relatedTarget as Node)) {
+            if (!this.shadow.contains(e.relatedTarget as Node)) {
                 this.selectMenu.style.display = 'none';
+                this.filterInput.value = "";
+                this.ingredientsSelect.replaceChildren(...this.ingredients);
             }
         })
 
         this.selectMenu.addEventListener('focusout', (e: any) => {
             if (!this.shadow.contains(e.relatedTarget)) {
                 this.selectMenu.style.display = 'none';
+                this.filterInput.value = "";
+                this.ingredientsSelect.replaceChildren(...this.ingredients);
             }
         })
     }
 
     private setIngredient(e: any) {
-        this.selectedText.innerText = e.target.value;
+        const selectedClasses = ["selected"];
+
+        this.selectedText.innerText = e.originalTarget.innerText;
 
         for (const ingredient of this.ingredients) {
-            const input = ingredient.querySelector('input') as HTMLInputElement;
-
-            if (input.value !== e.target.value) {
-                input.checked = false;
-                input.blur();
-            }
+            ingredient.classList.remove(...selectedClasses);
         }
+
+        e.originalTarget.classList.add(...selectedClasses);
     }
 
     private filterIngredients() {

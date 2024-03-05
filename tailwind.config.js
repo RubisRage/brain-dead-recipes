@@ -4,6 +4,7 @@ module.exports = {
     mode: 'jit',
     purge: [
         './templates/**/*.html',
+        './web-components/**/*.ts',
     ],
     theme: {
         extend: {},
