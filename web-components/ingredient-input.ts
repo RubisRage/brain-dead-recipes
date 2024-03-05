@@ -3,12 +3,12 @@
 export default class IngredientInput extends HTMLElement {
     private shadow: ShadowRoot;
 
-    private ingredients: HTMLOptionElement[];
+    private ingredients: HTMLInputElement[];
 
     private filterInput: HTMLInputElement;
     private ingredientsSelect: HTMLElement;
     private selectMenu: HTMLElement;
-    private selected: HTMLElement;
+    private selectedText: HTMLElement;
 
     constructor() {
         super()
@@ -41,13 +41,19 @@ export default class IngredientInput extends HTMLElement {
             .content.cloneNode(true) as HTMLElement;
 
         this.ingredients = Array.from(
-            ingredientsContent.children as HTMLCollectionOf<HTMLOptionElement>
+            ingredientsContent.children as HTMLCollectionOf<HTMLInputElement>
         );
 
-        this.selected = this.shadow
+        this.ingredients
+            .forEach((ingredient) => {
+                const input = ingredient.querySelector('input') as HTMLInputElement;
+                input.addEventListener('click', (e) => this.setIngredient(e))
+            })
+
+        this.selectedText = this.shadow
             .getElementById('selected') as HTMLElement;
 
-        this.selected.innerText = this.ingredients[0]?.innerText ?? "No hay ingredientes todavía!";
+        this.selectedText.innerText = this.ingredients[0]?.innerText.trim() ?? "No hay ingredientes todavía!";
 
         this.ingredientsSelect = this
             .shadow
@@ -59,22 +65,37 @@ export default class IngredientInput extends HTMLElement {
     }
 
     private addVisibilityCallbacks() {
-        this.selected.addEventListener('focus', () => {
+        this.selectedText.addEventListener('focus', () => {
             this.selectMenu.style.display = 'block';
         })
 
-        this.selected.addEventListener('blur', (e: FocusEvent) => {
-            if (!this.shadow.contains(e.relatedTarget as Node)) {
+        this.selectedText.addEventListener('blur', (e: any) => {
+            if (this.shadow.contains(e.relatedTarget as Node)) {
                 this.selectMenu.style.display = 'none';
             }
         })
 
-        this.selectMenu.addEventListener('focusout', () => {
-            this.selectMenu.style.display = 'none';
+        this.selectMenu.addEventListener('focusout', (e: any) => {
+            if (!this.shadow.contains(e.relatedTarget)) {
+                this.selectMenu.style.display = 'none';
+            }
         })
     }
 
-    filterIngredients() {
+    private setIngredient(e: any) {
+        this.selectedText.innerText = e.target.value;
+
+        for (const ingredient of this.ingredients) {
+            const input = ingredient.querySelector('input') as HTMLInputElement;
+
+            if (input.value !== e.target.value) {
+                input.checked = false;
+                input.blur();
+            }
+        }
+    }
+
+    private filterIngredients() {
         const filter = this.filterInput.value.toLowerCase();
 
         const filtered = this.ingredients.filter((ingredient) => {
