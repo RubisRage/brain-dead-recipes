@@ -21,43 +21,40 @@ export default class IngredientInput extends HTMLElement {
 
         this.shadow.appendChild(template.content.cloneNode(true));
 
+        this.shadow.querySelector('#delete').addEventListener('click', () => {
+            this.deleteSelf();
+        })
 
-        this.selectMenu = this
-            .shadow
-            .getElementById('menu') as HTMLElement;
+        this.selectMenu = this.shadow.querySelector('#menu')
 
-        this.filterInput = this
-            .shadow
-            .getElementById('filter') as HTMLInputElement;
-
+        this.filterInput = this.shadow.querySelector('#filter')
         this.filterInput.addEventListener(
             'input', () => this.filterIngredients()
         );
 
-        const ingredientsTemplate = document
-            .getElementById('ingredients-template') as HTMLTemplateElement;
-
-        const ingredientsContent = ingredientsTemplate
-            .content.cloneNode(true) as HTMLElement;
+        const ingredientsContent = document
+            .querySelector<HTMLTemplateElement>('#ingredients-template')
+            .content
+            .cloneNode(true) as HTMLElement;
 
         this.ingredients = Array.from(
             ingredientsContent.children as HTMLCollectionOf<HTMLInputElement>
         );
 
         this.ingredients
-            .forEach((ingredientButton) => {
-                ingredientButton.addEventListener('click', (e) => this.setIngredient(e))
+            .forEach((ingredient) => {
+                ingredient
+                    .querySelector<HTMLButtonElement>('button')
+                    .addEventListener('click', (e) => this.setIngredient(e))
             })
 
-        this.selectedText = this.shadow
-            .getElementById('selected') as HTMLElement;
+        this.selectedText = this.shadow.querySelector('#selected')
 
-        this.selectedText.innerText = this.ingredients[0]?.innerText.trim() ?? "No hay ingredientes todavía!";
+        this.selectedText.innerText = this
+            .ingredients[0]
+            ?.innerText.trim() ?? "No hay ingredientes todavía!"
 
-        this.ingredientsSelect = this
-            .shadow
-            .getElementById('ingredients-select') as HTMLElement;
-
+        this.ingredientsSelect = this.shadow.querySelector('#ingredients-select')
         this.ingredientsSelect.append(...this.ingredients);
 
         this.addVisibilityCallbacks()
@@ -70,19 +67,21 @@ export default class IngredientInput extends HTMLElement {
 
         this.selectedText.addEventListener('blur', (e: any) => {
             if (!this.shadow.contains(e.relatedTarget as Node)) {
-                this.selectMenu.style.display = 'none';
-                this.filterInput.value = "";
-                this.ingredientsSelect.replaceChildren(...this.ingredients);
+                this.hideMenu();
             }
         })
 
         this.selectMenu.addEventListener('focusout', (e: any) => {
             if (!this.shadow.contains(e.relatedTarget)) {
-                this.selectMenu.style.display = 'none';
-                this.filterInput.value = "";
-                this.ingredientsSelect.replaceChildren(...this.ingredients);
+                this.hideMenu();
             }
         })
+    }
+
+    private hideMenu() {
+        this.selectMenu.style.display = 'none';
+        this.filterInput.value = "";
+        this.ingredientsSelect.replaceChildren(...this.ingredients);
     }
 
     private setIngredient(e: any) {
@@ -91,7 +90,8 @@ export default class IngredientInput extends HTMLElement {
         this.selectedText.innerText = e.originalTarget.innerText;
 
         for (const ingredient of this.ingredients) {
-            ingredient.classList.remove(...selectedClasses);
+            const ingredientButton = ingredient.querySelector('button') as HTMLButtonElement;
+            ingredientButton.classList.remove(...selectedClasses);
         }
 
         e.originalTarget.classList.add(...selectedClasses);
@@ -105,6 +105,10 @@ export default class IngredientInput extends HTMLElement {
         })
 
         this.ingredientsSelect.replaceChildren(...filtered);
+    }
+
+    private deleteSelf() {
+        this.remove();
     }
 
 }
