@@ -42,43 +42,34 @@ impl FromStr for IngredientUnit {
     }
 }
 
-#[derive(Debug)]
+#[derive(Deserialize, Debug)]
+#[serde(try_from = "String")]
 struct RecipeIngredient {
     name: String,
     quantity: u32,
     unit: IngredientUnit,
 }
 
-fn somef<'de, D>(deserializer: D) -> Result<Vec<RecipeIngredient>, D::Error>
-where
-    D: serde::Deserializer<'de>,
-{
-    let v: Vec<String> = Vec::deserialize(deserializer)?;
-    let mut result = Vec::new();
+impl TryFrom<String> for RecipeIngredient {
+    type Error = &'static str;
 
-    for item in v {
-        let ingredient = item.split(',').collect::<Vec<_>>();
+    fn try_from(s: String) -> Result<Self, Self::Error> {
+        let ingredient = s.split(',').collect::<Vec<_>>();
 
         let [name, quantity, unit] = ingredient.as_slice() else {
-            return Err(serde::de::Error::custom(
-                "expected 3 elements separated by commas",
-            ));
+            return Err("expected 3 elements separated by commas");
         };
 
-        let quantity: u32 =
-            quantity.parse().map_err(serde::de::Error::custom)?;
+        let quantity: u32 = quantity.parse().map_err(|_| "invalid quantity")?;
 
-        let unit =
-            IngredientUnit::from_str(unit).map_err(serde::de::Error::custom)?;
+        let unit = IngredientUnit::from_str(unit)?;
 
-        result.push(RecipeIngredient {
+        Ok(Self {
             name: name.to_string(),
             quantity,
             unit,
-        });
+        })
     }
-
-    Ok(result)
 }
 
 #[derive(Deserialize, Debug)]
@@ -89,7 +80,7 @@ struct RecipeCreationData {
     #[serde(rename = "diners-number")]
     diners: u32,
 
-    #[serde(rename = "ingredients[]", deserialize_with = "somef")]
+    #[serde(rename = "ingredients[]")]
     ingredients: Vec<RecipeIngredient>,
 
     #[serde(rename = "recipe-steps")]
