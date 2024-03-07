@@ -1,11 +1,16 @@
 
 
 export default class IngredientInput extends HTMLElement {
+    static formAssociated = true;
+
     private shadow: ShadowRoot;
+    private internals: ElementInternals;
 
     private ingredients: HTMLInputElement[];
 
     private filterInput: HTMLInputElement;
+    private quantityInput: HTMLInputElement;
+    private quantityUnits: HTMLInputElement;
     private ingredientsSelect: HTMLElement;
     private selectMenu: HTMLElement;
     private selectedText: HTMLElement;
@@ -13,6 +18,7 @@ export default class IngredientInput extends HTMLElement {
     constructor() {
         super()
         this.shadow = this.attachShadow({ mode: 'open' });
+        this.internals = this.attachInternals();
     }
 
     connectedCallback() {
@@ -26,6 +32,9 @@ export default class IngredientInput extends HTMLElement {
         })
 
         this.selectMenu = this.shadow.querySelector('#menu')
+
+        this.quantityInput = this.shadow.querySelector('#ingredient-quantity')
+        this.quantityUnits = this.shadow.querySelector('#ingredient-units')
 
         this.filterInput = this.shadow.querySelector('#filter')
         this.filterInput.addEventListener(
@@ -111,6 +120,27 @@ export default class IngredientInput extends HTMLElement {
         this.remove();
     }
 
+    get value() {
+        return `${this.selectedText.innerText},${this.quantityInput.value},${this.quantityUnits.value}`;
+        //return this.selectedText.innerText;
+    }
+
+    set value(value) {
+        this.selectedText.innerText = value;
+        this.internals.setFormValue(value);
+    }
+
+    get form() {
+        return this.internals.form;
+    }
+
+    get name() {
+        return this.getAttribute('name');
+    }
+
+    get type() {
+        return this.localName;
+    }
 }
 
 customElements.define('ingredient-input', IngredientInput);
