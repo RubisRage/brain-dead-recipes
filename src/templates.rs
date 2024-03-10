@@ -9,3 +9,11 @@ pub struct Index {}
 pub struct RecipeForm {
     pub ingredients: Vec<String>,
 }
+
+
+#[derive(Template)]
+#[template(path = "recipe_view.html")]
+pub struct RecipesTemplate {
+    pub recipes: Vec<String>,
+}
+

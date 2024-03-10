@@ -9,7 +9,7 @@ use tower_http::{services::ServeDir, trace::TraceLayer};
 mod handlers;
 mod templates;
 
-use templates::{Index, RecipeForm};
+use templates::{Index, RecipeForm, RecipesTemplate};
 use url::Url;
 
 async fn index() -> Index {
@@ -134,11 +134,22 @@ async fn create_recipe(
     (StatusCode::OK, format!("Recipe: {:?}", recipe))
 }
 
+#[axum::debug_handler]
+async fn recipe_view() -> RecipesTemplate {
+    let recipes = vec!["Flour", "Sugar", "Eggs", "Milk"]
+        .iter()
+        .map(|s| s.to_string())
+        .collect();
+
+    RecipesTemplate {recipes}
+}
+
 #[tokio::main]
 async fn main() {
     let app = Router::new()
         .route("/", get(index))
         .route("/recipe", get(recipe_form).post(create_recipe))
+        .route("/recipes", get(recipe_view))
         .nest_service("/assets", ServeDir::new("dist"))
         .nest_service("/images", ServeDir::new("images"))
         .layer(TraceLayer::new_for_http());
