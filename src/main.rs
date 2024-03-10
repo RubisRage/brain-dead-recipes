@@ -10,6 +10,7 @@ mod handlers;
 mod templates;
 
 use templates::{Index, RecipeForm};
+use url::Url;
 
 async fn index() -> Index {
     Index {}
@@ -87,6 +88,40 @@ struct RecipeCreationData {
     steps: String,
 }
 
+enum Steps {
+    Text(String),
+    Url(Url),
+    Image(String),
+}
+
+///
+///
+/// # Examples
+/// ```
+/// let steps = Steps::Text("Mix everything together".to_string());
+/// let recipes = vec![
+///    Recipe {
+///        name: "Pancakes".to_string(),
+///        diners: 4,
+///        ingredients: vec![
+///        RecipeIngredient {
+///        name: "Flour".to_string(),
+///        }
+///        quantity: 200,
+///        unit: IngredientUnit::Grams,
+///        steps,
+///        image: Some("pancakes.jpg".to_string()),
+///    },
+/// ```
+///
+struct Recipe {
+    name: String,
+    diners: u32,
+    ingredients: Vec<RecipeIngredient>,
+    steps: Steps,
+    image: Option<String>,
+}
+
 async fn create_recipe(
     Form(recipe): Form<RecipeCreationData>,
 ) -> impl IntoResponse {
@@ -101,6 +136,7 @@ async fn main() {
         .route("/", get(index))
         .route("/recipe", get(recipe_form).post(create_recipe))
         .nest_service("/assets", ServeDir::new("dist"))
+        .nest_service("/images", ServeDir::new("images"))
         .layer(TraceLayer::new_for_http());
 
     tracing_subscriber::fmt()
