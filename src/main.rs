@@ -104,14 +104,18 @@ enum Steps {
 ///        name: "Pancakes".to_string(),
 ///        diners: 4,
 ///        ingredients: vec![
-///        RecipeIngredient {
-///        name: "Flour".to_string(),
-///        }
+///           RecipeIngredient {
+///               name: "Flour".to_string(),
+///               quantity: 200,
+///               unit: IngredientUnit::Grams,
+///           }
+///        ]
 ///        quantity: 200,
 ///        unit: IngredientUnit::Grams,
 ///        steps,
 ///        image: Some("pancakes.jpg".to_string()),
 ///    },
+/// ]
 /// ```
 ///
 struct Recipe {
