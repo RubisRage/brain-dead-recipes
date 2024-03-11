@@ -1,30 +1,150 @@
+use std::path::Path;
+
 use crate::{
     models::{RecipeIngredient, Steps},
     templates::{NewRecipeForm, StepsPartial},
 };
 use askama_axum::IntoResponse;
 use axum::{
+    async_trait,
+    extract::{FromRequest, Multipart, Request},
     http::{HeaderValue, StatusCode},
     routing::get,
     Router,
 };
-use axum_extra::extract::{Form, Query};
+use axum_extra::extract::Query;
 use serde::{self, Deserialize};
 
-#[derive(Deserialize, Debug)]
-#[serde(rename_all = "kebab-case")]
+#[derive(Debug)]
 struct RecipeCreationData {
     name: String,
     rations: u32,
-    #[serde(rename = "ingredients[]")]
     ingredients: Vec<RecipeIngredient>,
-    #[serde(flatten)]
     steps: Steps,
 }
 
-async fn create_recipe(
-    Form(recipe): Form<RecipeCreationData>,
-) -> impl IntoResponse {
+#[async_trait]
+impl<S> FromRequest<S> for RecipeCreationData
+where
+    S: Send + Sync,
+{
+    type Rejection = String;
+
+    async fn from_request(
+        req: Request,
+        state: &S,
+    ) -> Result<Self, Self::Rejection> {
+        let mut body = Multipart::from_request(req, state)
+            .await
+            .map_err(|e| e.body_text())?;
+
+        let mut name = None;
+        let mut rations = None;
+        let mut ingredients = vec![];
+        let mut steps = None;
+
+        while let Some(mut field) =
+            body.next_field().await.map_err(|e| e.body_text())?
+        {
+            match field.name() {
+                Some("name") => {
+                    name = Some(field.text().await.map_err(|e| e.body_text())?);
+                }
+
+                Some("rations") => {
+                    rations = Some(
+                        field
+                            .text()
+                            .await
+                            .map_err(|e| e.body_text())?
+                            .parse::<u32>()
+                            .map_err(|_| {
+                                "Rations must be a valid number!".to_string()
+                            })?,
+                    );
+                }
+
+                Some("ingredients[]") => {
+                    ingredients.push(RecipeIngredient::try_from(
+                        field.text().await.map_err(|e| e.body_text())?,
+                    )?)
+                }
+
+                Some("Text") => {
+                    steps = Some(Steps::Text(
+                        field.text().await.map_err(|e| e.body_text())?,
+                    ))
+                }
+
+                Some("URL") => {
+                    let previous = steps.replace(Steps::URL(
+                        field
+                            .text()
+                            .await
+                            .map_err(|e| e.body_text())?
+                            .parse()
+                            .map_err(|_| "Link must be a valid URL!")?,
+                    ));
+
+                    if previous.is_some() {
+                        return Err(
+                            "Multiple steps types specified!".to_string()
+                        );
+                    }
+                }
+
+                Some("Image") => {
+                    let content_type = field
+                        .content_type()
+                        .ok_or("Content type not present")?;
+
+                    if content_type != "image/jpeg" {
+                        return Err("Invalid content type".to_string());
+                    }
+
+                    let filename = field
+                        .file_name()
+                        .ok_or("File name not present")?
+                        .to_string();
+
+                    let path = format!("images/{}", filename);
+                    let path = Path::new(&path);
+
+                    if steps.replace(Steps::Image(filename)).is_some() {
+                        return Err(
+                            "Multiple steps types specified!".to_string()
+                        );
+                    }
+
+                    let bytes =
+                        field.bytes().await.map_err(|e| e.body_text())?;
+
+                    tokio::fs::write(&path, bytes)
+                        .await
+                        .map_err(|e| e.to_string())?;
+                }
+
+                _ => Err("Invalid parameter!".to_string())?,
+            }
+        }
+
+        match (name, rations, steps) {
+            (Some(name), Some(rations), Some(steps)) => {
+                Ok(RecipeCreationData {
+                    name,
+                    rations,
+                    steps,
+                    ingredients,
+                })
+            }
+
+            _ => Err("Recipe is either missing name, rations or steps fields"
+                .to_string()),
+        }
+    }
+}
+
+async fn create_recipe(recipe: RecipeCreationData) -> impl IntoResponse {
     dbg!(&recipe);
 
     (StatusCode::OK, format!("Recipe: {:?}", recipe))
