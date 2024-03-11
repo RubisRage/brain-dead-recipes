@@ -1,5 +1,7 @@
 use askama::Template;
 
+use crate::Steps;
+
 #[derive(Template)]
 #[template(path = "index.html")]
 pub struct Index {}
@@ -8,4 +10,11 @@ pub struct Index {}
 #[template(path = "recipe-form.html")]
 pub struct RecipeForm {
     pub ingredients: Vec<String>,
+    pub steps: StepsPartial,
+}
+
+#[derive(Template, Default)]
+#[template(path = "steps-partial.html")]
+pub struct StepsPartial {
+    pub steps: Steps,
 }

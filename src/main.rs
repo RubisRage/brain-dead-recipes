@@ -1,16 +1,16 @@
-use std::{collections::HashMap, str::FromStr};
-
 use askama_axum::IntoResponse;
 use axum::{http::StatusCode, routing::get, Router};
-use axum_extra::extract::Form;
+use axum_extra::extract::{Form, Query};
 use serde::{self, Deserialize};
+use std::str::FromStr;
 use tower_http::{services::ServeDir, trace::TraceLayer};
 
 mod handlers;
 mod templates;
 
 use templates::{Index, RecipeForm};
-use url::Url;
+
+use crate::templates::StepsPartial;
 
 async fn index() -> Index {
     Index {}
@@ -22,25 +22,15 @@ async fn recipe_form() -> RecipeForm {
         .map(|s| s.to_string())
         .collect();
 
-    RecipeForm { ingredients }
+    let steps = Default::default();
+
+    RecipeForm { ingredients, steps }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize)]
 enum IngredientUnit {
     Grams,
     Units,
-}
-
-impl FromStr for IngredientUnit {
-    type Err = &'static str;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "g" => Ok(Self::Grams),
-            "unds" => Ok(Self::Units),
-            _ => Err("Valid units are: g, unds"),
-        }
-    }
 }
 
 #[derive(Deserialize, Debug)]
@@ -62,8 +52,7 @@ impl TryFrom<String> for RecipeIngredient {
         };
 
         let quantity: u32 = quantity.parse().map_err(|_| "invalid quantity")?;
-
-        let unit = IngredientUnit::from_str(unit)?;
+        let unit = serde_plain::from_str(unit).map_err(|_| "invalid unit")?;
 
         Ok(Self {
             name: name.to_string(),
@@ -84,46 +73,66 @@ struct RecipeCreationData {
     #[serde(rename = "ingredients[]")]
     ingredients: Vec<RecipeIngredient>,
 
-    #[serde(rename = "recipe-steps")]
-    steps: String,
+    #[serde(flatten)]
+    steps: Steps,
 }
 
-enum Steps {
-    Text(String),
-    Url(Url),
-    Image(String),
-}
-
-///
-///
-/// # Examples
-/// ```
-/// let steps = Steps::Text("Mix everything together".to_string());
-/// let recipes = vec![
-///    Recipe {
-///        name: "Pancakes".to_string(),
-///        diners: 4,
-///        ingredients: vec![
-///           RecipeIngredient {
-///               name: "Flour".to_string(),
-///               quantity: 200,
-///               unit: IngredientUnit::Grams,
-///           }
-///        ]
-///        quantity: 200,
-///        unit: IngredientUnit::Grams,
-///        steps,
-///        image: Some("pancakes.jpg".to_string()),
-///    },
-/// ]
-/// ```
-///
 struct Recipe {
     name: String,
     diners: u32,
     ingredients: Vec<RecipeIngredient>,
     steps: Steps,
     image: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+enum Steps {
+    Text(String),
+    URL(url::Url),
+    Image(String),
+}
+
+impl Default for Steps {
+    fn default() -> Self {
+        Self::Text("".to_string())
+    }
+}
+
+#[derive(Deserialize)]
+#[serde(rename = "steps-type")]
+enum StepsParam {
+    Text,
+    Url,
+    Image,
+}
+
+#[derive(Deserialize)]
+struct StepsParamWrapper {
+    #[serde(rename = "steps-type")]
+    steps: StepsParam,
+}
+
+impl From<StepsParam> for Steps {
+    fn from(steps: StepsParam) -> Self {
+        match steps {
+            StepsParam::Text => Steps::Text(Default::default()),
+            StepsParam::Url => Steps::URL(
+                "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+                    .parse()
+                    .expect("Default URL should be valid"),
+            ),
+            StepsParam::Image => Steps::Image(Default::default()),
+        }
+    }
+}
+
+#[axum::debug_handler]
+async fn steps_type(
+    Query(StepsParamWrapper { steps }): Query<StepsParamWrapper>,
+) -> StepsPartial {
+    let steps = Steps::from(steps);
+
+    StepsPartial { steps }
 }
 
 async fn create_recipe(
@@ -139,6 +148,7 @@ async fn main() {
     let app = Router::new()
         .route("/", get(index))
         .route("/recipe", get(recipe_form).post(create_recipe))
+        .route("/recipe/steps", get(steps_type))
         .nest_service("/assets", ServeDir::new("dist"))
         .nest_service("/images", ServeDir::new("images"))
         .layer(TraceLayer::new_for_http());
