@@ -1,3 +1,4 @@
+use anyhow::bail;
 use serde::Deserialize;
 
 pub struct Recipe {
@@ -36,17 +37,17 @@ enum IngredientUnit {
 }
 
 impl TryFrom<String> for RecipeIngredient {
-    type Error = &'static str;
+    type Error = anyhow::Error;
 
     fn try_from(s: String) -> Result<Self, Self::Error> {
         let ingredient = s.split(',').collect::<Vec<_>>();
 
         let [name, quantity, unit] = ingredient.as_slice() else {
-            return Err("expected 3 elements separated by commas");
+            anyhow::bail!("missing either name, quantity or unit")
         };
 
-        let quantity: u32 = quantity.parse().map_err(|_| "invalid quantity")?;
-        let unit = serde_plain::from_str(unit).map_err(|_| "invalid unit")?;
+        let quantity: u32 = quantity.parse()?;
+        let unit = serde_plain::from_str(unit)?;
 
         Ok(Self {
             name: name.to_string(),

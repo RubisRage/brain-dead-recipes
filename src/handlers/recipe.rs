@@ -4,6 +4,7 @@ use crate::{
     models::{RecipeIngredient, Steps},
     templates::{NewRecipeForm, StepsPartial},
 };
+use anyhow::anyhow;
 use askama_axum::IntoResponse;
 use axum::{
     async_trait,
@@ -23,108 +24,100 @@ struct RecipeCreationData {
     steps: Steps,
 }
 
+struct AppError(anyhow::Error);
+
+impl<E> From<E> for AppError
+where
+    E: Into<anyhow::Error>,
+{
+    fn from(e: E) -> Self {
+        Self(e.into())
+    }
+}
+
+impl IntoResponse for AppError {
+    fn into_response(self) -> askama_axum::Response {
+        StatusCode::INTERNAL_SERVER_ERROR.into_response()
+    }
+}
+
 #[async_trait]
 impl<S> FromRequest<S> for RecipeCreationData
 where
     S: Send + Sync,
 {
-    type Rejection = String;
+    type Rejection = AppError;
 
     async fn from_request(
         req: Request,
         state: &S,
     ) -> Result<Self, Self::Rejection> {
-        let mut body = Multipart::from_request(req, state)
-            .await
-            .map_err(|e| e.body_text())?;
+        let mut body = Multipart::from_request(req, state).await?;
 
         let mut name = None;
         let mut rations = None;
         let mut ingredients = vec![];
         let mut steps = None;
 
-        while let Some(mut field) =
-            body.next_field().await.map_err(|e| e.body_text())?
-        {
+        while let Some(field) = body.next_field().await? {
             match field.name() {
                 Some("name") => {
-                    name = Some(field.text().await.map_err(|e| e.body_text())?);
+                    name = Some(field.text().await?);
                 }
 
                 Some("rations") => {
-                    rations = Some(
-                        field
-                            .text()
-                            .await
-                            .map_err(|e| e.body_text())?
-                            .parse::<u32>()
-                            .map_err(|_| {
-                                "Rations must be a valid number!".to_string()
-                            })?,
-                    );
+                    rations = Some(field.text().await?.parse::<u32>()?);
                 }
 
-                Some("ingredients[]") => {
-                    ingredients.push(RecipeIngredient::try_from(
-                        field.text().await.map_err(|e| e.body_text())?,
-                    )?)
-                }
+                Some("ingredients[]") => ingredients
+                    .push(RecipeIngredient::try_from(field.text().await?)?),
 
-                Some("Text") => {
-                    steps = Some(Steps::Text(
-                        field.text().await.map_err(|e| e.body_text())?,
-                    ))
-                }
+                Some("Text") => steps = Some(Steps::Text(field.text().await?)),
 
                 Some("URL") => {
-                    let previous = steps.replace(Steps::URL(
-                        field
-                            .text()
-                            .await
-                            .map_err(|e| e.body_text())?
-                            .parse()
-                            .map_err(|_| "Link must be a valid URL!")?,
-                    ));
-
-                    if previous.is_some() {
+                    if steps
+                        .replace(Steps::URL(field.text().await?.parse()?))
+                        .is_some()
+                    {
                         return Err(
-                            "Multiple steps types specified!".to_string()
+                            anyhow!("Multiple steps types specified!").into()
                         );
                     }
                 }
 
                 Some("Image") => {
-                    let content_type = field
-                        .content_type()
-                        .ok_or("Content type not present")?;
+                    let content_type = field.content_type();
 
-                    if content_type != "image/jpeg" {
-                        return Err("Invalid content type".to_string());
+                    if let Some(content_type) = content_type {
+                        if content_type != "image/jpeg" {
+                            return Err(anyhow!("invalid content type").into());
+                        }
+                    } else {
+                        return Err(anyhow!("content type not present").into());
                     }
 
-                    let filename = field
-                        .file_name()
-                        .ok_or("File name not present")?
-                        .to_string();
+                    let Some(filename) = field.file_name() else {
+                        return Err(anyhow!("filename not present").into());
+                    };
 
                     let path = format!("images/{}", filename);
                     let path = Path::new(&path);
 
-                    if steps.replace(Steps::Image(filename)).is_some() {
+                    if steps
+                        .replace(Steps::Image(filename.to_string()))
+                        .is_some()
+                    {
                         return Err(
-                            "Multiple steps types specified!".to_string()
+                            anyhow!("Multiple steps types specified!").into()
                         );
                     }
 
-                    let bytes =
-                        field.bytes().await.map_err(|e| e.body_text())?;
+                    let bytes = field.bytes().await?;
 
-                    tokio::fs::write(&path, bytes)
-                        .await
-                        .map_err(|e| e.to_string())?;
+                    tokio::fs::write(&path, bytes).await?;
                 }
 
-                _ => Err("Invalid parameter!".to_string())?,
+                _ => return Err(anyhow!("invalid field").into()),
             }
         }
 
@@ -138,8 +131,10 @@ where
                 })
             }
 
-            _ => Err("Recipe is either missing name, rations or steps fields"
-                .to_string()),
+            _ => Err(anyhow!(
+                "Recipe is either missing name, rations or steps fields"
+            )
+            .into()),
         }
     }
 }
