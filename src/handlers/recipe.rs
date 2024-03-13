@@ -1,15 +1,15 @@
-use std::path::Path;
-
 use crate::{
     models::{RecipeIngredient, Steps},
     templates::{NewRecipeForm, StepsPartial},
 };
-use anyhow::anyhow;
+use anyhow::{anyhow, Context};
 use askama_axum::IntoResponse;
 use axum::{
     async_trait,
+    body::Bytes,
     extract::{FromRequest, Multipart, Request},
     http::{HeaderValue, StatusCode},
+    response::Redirect,
     routing::get,
     Router,
 };
@@ -17,11 +17,18 @@ use axum_extra::extract::Query;
 use serde::{self, Deserialize};
 
 #[derive(Debug)]
-struct RecipeCreationData {
+enum StepsCreationRequest {
+    Text(String),
+    Url(url::Url),
+    Image(Bytes, String),
+}
+
+#[derive(Debug)]
+struct RecipeCreationRequest {
     name: String,
     rations: u32,
     ingredients: Vec<RecipeIngredient>,
-    steps: Steps,
+    steps: StepsCreationRequest,
 }
 
 struct AppError(anyhow::Error);
@@ -42,7 +49,7 @@ impl IntoResponse for AppError {
 }
 
 #[async_trait]
-impl<S> FromRequest<S> for RecipeCreationData
+impl<S> FromRequest<S> for RecipeCreationRequest
 where
     S: Send + Sync,
 {
@@ -59,6 +66,14 @@ where
         let mut ingredients = vec![];
         let mut steps = None;
 
+        let mut set_steps = |s| {
+            if steps.replace(s).is_none() {
+                Ok(())
+            } else {
+                return Err(anyhow!("multiple steps types specified"));
+            }
+        };
+
         while let Some(field) = body.next_field().await? {
             match field.name() {
                 Some("name") => {
@@ -72,49 +87,33 @@ where
                 Some("ingredients[]") => ingredients
                     .push(RecipeIngredient::try_from(field.text().await?)?),
 
-                Some("Text") => steps = Some(Steps::Text(field.text().await?)),
-
-                Some("URL") => {
-                    if steps
-                        .replace(Steps::URL(field.text().await?.parse()?))
-                        .is_some()
-                    {
-                        return Err(
-                            anyhow!("Multiple steps types specified!").into()
-                        );
-                    }
+                Some("Text") => {
+                    set_steps(StepsCreationRequest::Text(field.text().await?))?
                 }
 
+                Some("URL") => set_steps(StepsCreationRequest::Url(
+                    field.text().await?.parse()?,
+                ))?,
+
                 Some("Image") => {
-                    let content_type = field.content_type();
+                    let content_type = field
+                        .content_type()
+                        .context("content type not present")?
+                        .to_string();
 
-                    if let Some(content_type) = content_type {
-                        if content_type != "image/jpeg" {
-                            return Err(anyhow!("invalid content type").into());
-                        }
+                    // TODO Check for other valid image types
+                    let (_, extension) = if content_type == "image/jpeg" {
+                        content_type.split_once('/').expect(
+                            "/ should be present on valid content types",
+                        )
                     } else {
-                        return Err(anyhow!("content type not present").into());
-                    }
-
-                    let Some(filename) = field.file_name() else {
-                        return Err(anyhow!("filename not present").into());
+                        return Err(anyhow!("invalid content type").into());
                     };
 
-                    let path = format!("images/{}", filename);
-                    let path = Path::new(&path);
-
-                    if steps
-                        .replace(Steps::Image(filename.to_string()))
-                        .is_some()
-                    {
-                        return Err(
-                            anyhow!("Multiple steps types specified!").into()
-                        );
-                    }
-
-                    let bytes = field.bytes().await?;
-
-                    tokio::fs::write(&path, bytes).await?;
+                    set_steps(StepsCreationRequest::Image(
+                        field.bytes().await?,
+                        extension.to_string(),
+                    ))?;
                 }
 
                 _ => return Err(anyhow!("invalid field").into()),
@@ -123,7 +122,7 @@ where
 
         match (name, rations, steps) {
             (Some(name), Some(rations), Some(steps)) => {
-                Ok(RecipeCreationData {
+                Ok(RecipeCreationRequest {
                     name,
                     rations,
                     steps,
@@ -131,18 +130,19 @@ where
                 })
             }
 
-            _ => Err(anyhow!(
-                "Recipe is either missing name, rations or steps fields"
-            )
-            .into()),
+            _ => {
+                return Err(anyhow!(
+                    "recipe is either missing name, rations or steps fields"
+                )
+                .into());
+            }
         }
     }
 }
 
-async fn create_recipe(recipe: RecipeCreationData) -> impl IntoResponse {
-    dbg!(&recipe);
-
-    (StatusCode::OK, format!("Recipe: {:?}", recipe))
+async fn create_recipe(recipe: RecipeCreationRequest) -> impl IntoResponse {
+    // TODO design database schema
+    Redirect::to("/recipes")
 }
 
 #[axum::debug_handler]
