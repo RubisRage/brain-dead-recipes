@@ -13,9 +13,9 @@ create table if not exists ingredients (
 );
 
 create table if not exists recipe_ingredients (
-    recipe_name text primary key,
+    recipe_name text references recipes(name) on delete cascade,
+    ingredient_name text not null references ingredients(name),
     quantity integer not null,
     unit text not null,
-    ingredient_name text not null references ingredients(name),
-    foreign key (recipe_name) references recipes(name) on delete cascade
+    primary key(recipe_name, ingredient_name)
 );

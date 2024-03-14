@@ -24,14 +24,14 @@ impl Default for Steps {
 #[derive(Deserialize, Debug)]
 #[serde(try_from = "String")]
 pub struct RecipeIngredient {
-    recipe_name: String,
-    quantity: u32,
-    unit: IngredientUnit,
+    pub recipe_name: String,
+    pub quantity: u32,
+    pub unit: IngredientUnit,
 }
 
 #[derive(sqlx::Type, Debug, Deserialize)]
 #[sqlx(rename_all = "lowercase")]
-enum IngredientUnit {
+pub enum IngredientUnit {
     Grams,
     Units,
 }
