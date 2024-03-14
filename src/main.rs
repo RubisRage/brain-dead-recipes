@@ -15,7 +15,7 @@ async fn main() {
 
     let app = Router::<SqlitePool>::new()
         .route("/", get(pages::index))
-        .merge(pages::recipe::routes())
+        .nest("/recipe", pages::recipe::routes())
         .with_state(db)
         .nest_service("/assets", ServeDir::new("dist"))
         .nest_service("/images", ServeDir::new("images"))

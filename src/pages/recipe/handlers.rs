@@ -107,6 +107,6 @@ async fn steps_type(
 
 pub fn routes() -> Router<SqlitePool> {
     Router::new()
-        .route("/new-recipe", get(new_recipe_form).post(create_recipe))
-        .route("/steps-type", get(steps_type))
+        .route("/new", get(new_recipe_form).post(create_recipe))
+        .route("/type", get(steps_type))
 }

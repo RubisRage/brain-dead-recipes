@@ -43,7 +43,7 @@
 
         <div class="sm:col-span-4">
             <label for="steps-type" class="block text-sm font-medium leading-6 text-gray-900">¿Cómo quieres especificar tú receta?</label>
-            <select hx-get="/steps-type" hx-target="#steps" hx-swap="innerHtml" hx-params="steps-type"  name="steps-type" selected="Text" class="w-28 col-span-2 row-start-2 h-7 p-0 ring-1 ring-inset ring-gray-300 pl-1 border-0 rounded-md shadow-sm focus-within:ring-2 focus-within:ring-indigo-600 ">
+            <select hx-get="/recipe/type" hx-target="#steps" hx-swap="innerHtml" hx-params="steps-type"  name="steps-type" selected="Text" class="w-28 col-span-2 row-start-2 h-7 p-0 ring-1 ring-inset ring-gray-300 pl-1 border-0 rounded-md shadow-sm focus-within:ring-2 focus-within:ring-indigo-600 ">
                 <option value="Text">Texto</option>
                 <option value="Url">Enlace</option>
                 <option value="Image">Imagen</option>
