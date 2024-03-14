@@ -121,8 +121,11 @@ export default class IngredientInput extends HTMLElement {
     }
 
     get value() {
-        return `${this.selectedText.innerText},${this.quantityInput.value},${this.quantityUnits.value}`;
-        //return this.selectedText.innerText;
+        return JSON.stringify({
+            selected: this.selectedText.innerText,
+            quantity: parseInt(this.quantityInput.value),
+            unit: this.quantityUnits.value
+        })
     }
 
     set value(value) {

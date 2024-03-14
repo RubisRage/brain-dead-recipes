@@ -7,7 +7,7 @@
 {% include "ingredient-input.html" %}
 
 <main class="flex h-svh justify-center">
-    <form hx-post="/new-recipe" hx-params="not steps-type" enctype="multipart/form-data" autocomplete="off" class="flex flex-col w-1/2 gap-4 sm:max-w-md">
+    <form hx-post="/recipe/new" hx-params="not steps-type" enctype="multipart/form-data" autocomplete="off" class="flex flex-col w-1/2 gap-4 sm:max-w-md">
         <div class="sm:col-span-4">
             <label for="name" class="block text-sm font-medium leading-6 text-gray-900">Nombre de la receta</label>
             <div class="mt-2">
@@ -29,7 +29,7 @@
         <div  class="sm:col-span-4">
             <label for="ingredients[]" class="block text-sm font-medium leading-6 text-gray-900">Ingredientes</label>
 
-            <div id="ingredients" class="divide-y pr-2 flex flex-col">
+            <div id="ingredients" class="divide-y flex flex-col">
                 <ingredient-input  name="ingredients[]"></ingredient-input>
             </div>
 

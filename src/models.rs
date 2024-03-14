@@ -22,7 +22,7 @@ impl Default for Steps {
 }
 
 #[derive(Deserialize, Debug)]
-#[serde(try_from = "String")]
+//#[serde(try_from = "String")]
 pub struct RecipeIngredient {
     pub recipe_name: String,
     pub quantity: u32,

@@ -1,4 +1,4 @@
-use super::extract::{RecipeCreationRequest, StepsCreationRequest};
+use super::extract::{RecipeCreationRequest, StepsPart};
 use super::AppError;
 use crate::{
     models::Steps,
@@ -21,9 +21,9 @@ async fn create_recipe(
     let image: Option<String> = None;
     let rations = req.rations;
     let (steps, bytes) = match req.steps {
-        StepsCreationRequest::Text(text) => (Steps::Text(text), None),
-        StepsCreationRequest::Url(url) => (Steps::Url(url), None),
-        StepsCreationRequest::Image(bytes, extension) => {
+        StepsPart::Text(text) => (Steps::Text(text), None),
+        StepsPart::Url(url) => (Steps::Url(url), None),
+        StepsPart::Image(bytes, extension) => {
             (Steps::Image(format!("{}.{}", name, extension)), Some(bytes))
         }
     };
@@ -52,7 +52,7 @@ async fn create_recipe(
             (?, ?, ?, ?)
             "#,
             name,
-            i.recipe_name,
+            i.selected,
             i.quantity,
             i.unit
         )

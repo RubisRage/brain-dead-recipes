@@ -11,7 +11,12 @@ async fn main() {
     let db = sqlx::SqlitePool::connect("sqlite:./database.db")
         .await
         .unwrap();
+
     sqlx::migrate!("./migrations").run(&db).await.unwrap();
+    sqlx::query!(r#"PRAGMA foreign_keys=ON"#)
+        .execute(&db)
+        .await
+        .unwrap();
 
     let app = Router::<SqlitePool>::new()
         .route("/", get(pages::index))

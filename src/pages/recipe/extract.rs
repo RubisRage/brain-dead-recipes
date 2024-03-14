@@ -1,26 +1,35 @@
 use super::AppError;
 
-use crate::models::RecipeIngredient;
+use crate::models::IngredientUnit;
 use anyhow::{anyhow, Context};
 use axum::{
     async_trait,
     body::Bytes,
     extract::{FromRequest, Multipart, Request},
 };
-
-#[derive(Debug)]
-pub enum StepsCreationRequest {
-    Text(String),
-    Url(url::Url),
-    Image(Bytes, String),
-}
+use serde::Deserialize;
 
 #[derive(Debug)]
 pub struct RecipeCreationRequest {
     pub name: String,
     pub rations: u32,
-    pub ingredients: Vec<RecipeIngredient>,
-    pub steps: StepsCreationRequest,
+    pub ingredients: Vec<RecipeIngredientPart>,
+    pub steps: StepsPart,
+}
+
+#[derive(Debug)]
+pub enum StepsPart {
+    Text(String),
+    Url(url::Url),
+    Image(Bytes, String),
+}
+
+#[derive(Debug, Deserialize)]
+pub struct RecipeIngredientPart {
+    pub selected: String,
+    #[serde()]
+    pub quantity: u32,
+    pub unit: IngredientUnit,
 }
 
 #[async_trait]
@@ -60,15 +69,15 @@ where
                 }
 
                 Some("ingredients[]") => ingredients
-                    .push(RecipeIngredient::try_from(field.text().await?)?),
+                    .push(serde_json::from_str(&field.text().await?)?),
 
                 Some("Text") => {
-                    set_steps(StepsCreationRequest::Text(field.text().await?))?
+                    set_steps(StepsPart::Text(field.text().await?))?
                 }
 
-                Some("URL") => set_steps(StepsCreationRequest::Url(
-                    field.text().await?.parse()?,
-                ))?,
+                Some("URL") => {
+                    set_steps(StepsPart::Url(field.text().await?.parse()?))?
+                }
 
                 Some("Image") => {
                     let content_type = field
@@ -85,7 +94,7 @@ where
                         return Err(anyhow!("invalid content type").into());
                     };
 
-                    set_steps(StepsCreationRequest::Image(
+                    set_steps(StepsPart::Image(
                         field.bytes().await?,
                         extension.to_string(),
                     ))?;
