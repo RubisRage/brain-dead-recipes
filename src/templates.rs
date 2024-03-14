@@ -1,5 +1,5 @@
-use crate::models::Steps;
 use askama_axum::Template;
+use serde::Deserialize;
 
 #[derive(Template)]
 #[template(path = "index.html")]
@@ -12,8 +12,11 @@ pub struct NewRecipeForm {
     pub steps: StepsPartial,
 }
 
-#[derive(Template, Default)]
+#[derive(Template, Deserialize, Default)]
 #[template(path = "steps-partial.html")]
-pub struct StepsPartial {
-    pub steps: Steps,
+pub enum StepsPartial {
+    #[default]
+    Text,
+    Url,
+    Image,
 }

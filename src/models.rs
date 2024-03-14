@@ -1,5 +1,4 @@
-use anyhow::bail;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 pub struct Recipe {
     name: String,
@@ -9,10 +8,10 @@ pub struct Recipe {
     image: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub enum Steps {
     Text(String),
-    URL(url::Url),
+    Url(url::Url),
     Image(String),
 }
 
@@ -25,12 +24,13 @@ impl Default for Steps {
 #[derive(Deserialize, Debug)]
 #[serde(try_from = "String")]
 pub struct RecipeIngredient {
-    name: String,
+    recipe_name: String,
     quantity: u32,
     unit: IngredientUnit,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(sqlx::Type, Debug, Deserialize)]
+#[sqlx(rename_all = "lowercase")]
 enum IngredientUnit {
     Grams,
     Units,
@@ -50,7 +50,7 @@ impl TryFrom<String> for RecipeIngredient {
         let unit = serde_plain::from_str(unit)?;
 
         Ok(Self {
-            name: name.to_string(),
+            recipe_name: name.to_string(),
             quantity,
             unit,
         })

@@ -7,7 +7,7 @@ use askama_axum::IntoResponse;
 use axum::{
     async_trait,
     body::Bytes,
-    extract::{FromRequest, Multipart, Request},
+    extract::{FromRequest, Multipart, Request, State},
     http::{HeaderValue, StatusCode},
     response::Redirect,
     routing::get,
@@ -15,6 +15,8 @@ use axum::{
 };
 use axum_extra::extract::Query;
 use serde::{self, Deserialize};
+use serde_json::json;
+use sqlx::SqlitePool;
 
 #[derive(Debug)]
 enum StepsCreationRequest {
@@ -140,56 +142,78 @@ where
     }
 }
 
-async fn create_recipe(recipe: RecipeCreationRequest) -> impl IntoResponse {
-    // TODO design database schema
+async fn create_recipe(
+    State(db): State<SqlitePool>,
+    req: RecipeCreationRequest,
+) -> Redirect {
+    let name = lorust::kebab_case(req.name);
+    let image: Option<String> = None;
+    let rations = req.rations;
+    let (steps, bytes) = match req.steps {
+        StepsCreationRequest::Text(text) => (Steps::Text(text), None),
+        StepsCreationRequest::Url(url) => (Steps::Url(url), None),
+        StepsCreationRequest::Image(bytes, extension) => {
+            (Steps::Image(format!("{}.{}", name, extension)), Some(bytes))
+        }
+    };
+
+    let mut tx = db.begin().await.unwrap();
+    let steps_serialized = json!(steps);
+
+    sqlx::query!(
+        r#"
+        INSERT INTO recipes (name, image, rations, steps) VALUES (?, ?, ?, ?)
+        "#,
+        name,
+        image,
+        rations,
+        steps_serialized
+    )
+    .execute(&mut *tx)
+    .await
+    .unwrap();
+
+    // TODO: Store ingredients in db
+
+    if let (Steps::Image(filename), Some(bytes)) = (steps, bytes) {
+        tokio::fs::write(format!("images/{filename}"), bytes)
+            .await
+            .unwrap();
+    }
+
+    tx.commit().await.unwrap();
+
     Redirect::to("/recipes")
 }
 
 #[axum::debug_handler]
-async fn new_recipe_form() -> NewRecipeForm {
-    let ingredients = vec!["Flour", "Sugar", "Eggs", "Milk"]
-        .iter()
-        .map(|s| s.to_string())
-        .collect();
+async fn new_recipe_form(State(db): State<SqlitePool>) -> NewRecipeForm {
+    let ingredients = sqlx::query_scalar::<_, String>(
+        r#"
+        SELECT name 
+        FROM ingredients
+        "#,
+    )
+    .fetch_all(&db)
+    .await
+    .unwrap();
 
-    let steps = Default::default();
-
-    NewRecipeForm { ingredients, steps }
+    NewRecipeForm {
+        ingredients,
+        steps: StepsPartial::default(),
+    }
 }
 
 #[derive(Deserialize)]
 #[serde(rename_all = "kebab-case")]
 struct StepsParam {
-    steps_type: StepsType,
-}
-
-#[derive(Deserialize)]
-enum StepsType {
-    Text,
-    Url,
-    Image,
-}
-
-impl From<StepsType> for Steps {
-    fn from(steps: StepsType) -> Self {
-        match steps {
-            StepsType::Text => Steps::Text(Default::default()),
-            StepsType::Url => Steps::URL(
-                "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
-                    .parse()
-                    .expect("Default URL should be valid"),
-            ),
-            StepsType::Image => Steps::Image(Default::default()),
-        }
-    }
+    steps_type: StepsPartial,
 }
 
 async fn steps_type(
     Query(StepsParam { steps_type }): Query<StepsParam>,
 ) -> impl IntoResponse {
-    let steps = Steps::from(steps_type);
-
-    let mut response = StepsPartial { steps }.into_response();
+    let mut response = steps_type.into_response();
 
     response
         .headers_mut()
@@ -198,7 +222,7 @@ async fn steps_type(
     response
 }
 
-pub fn routes() -> Router {
+pub fn routes() -> Router<SqlitePool> {
     Router::new()
         .route("/new-recipe", get(new_recipe_form).post(create_recipe))
         .route("/steps-type", get(steps_type))
