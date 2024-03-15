@@ -98,7 +98,7 @@ enum Steps {
 ///
 /// # Examples
 /// ```
-/// let steps = Steps::Text("Mix everything together".to_string());
+
 /// let recipes = vec![
 ///    Recipe {
 ///        name: "Pancakes".to_string(),
@@ -108,10 +108,10 @@ enum Steps {
 ///               name: "Flour".to_string(),
 ///               quantity: 200,
 ///               unit: IngredientUnit::Grams,
+        ///        quantity: 200,
+        ///        unit: IngredientUnit::Grams,
 ///           }
 ///        ]
-///        quantity: 200,
-///        unit: IngredientUnit::Grams,
 ///        steps,
 ///        image: Some("pancakes.jpg".to_string()),
 ///    },
@@ -136,10 +136,56 @@ async fn create_recipe(
 
 #[axum::debug_handler]
 async fn recipe_view() -> RecipesTemplate {
-    let recipes = vec!["Flour", "Sugar", "Eggs", "Milk"]
-        .iter()
-        .map(|s| s.to_string())
-        .collect();
+   
+    let recipes = vec![Recipe {
+                name: "Pancakes".to_string(),
+               diners: 4,
+               ingredients: vec![
+                  RecipeIngredient {
+                      name: "Flour".to_string(),
+                      quantity: 200,
+                      unit: IngredientUnit::Grams,
+                  }
+               ],
+               steps : Steps::Text("Mix everything together".to_string()),
+               image: Some("pancakes.jpg".to_string()),
+           },Recipe {
+            name: "Pancakes".to_string(),
+           diners: 4,
+           ingredients: vec![
+              RecipeIngredient {
+                  name: "Flour".to_string(),
+                  quantity: 200,
+                  unit: IngredientUnit::Grams,
+              }
+           ],
+           steps : Steps::Text("Mix everything together".to_string()),
+           image: Some("pancakes.jpg".to_string()),
+       },Recipe {
+        name: "Pancakes".to_string(),
+       diners: 4,
+       ingredients: vec![
+          RecipeIngredient {
+              name: "Flour".to_string(),
+              quantity: 200,
+              unit: IngredientUnit::Grams,
+          }
+       ],
+       steps : Steps::Text("Mix everything together".to_string()),
+       image: Some("pancakes.jpg".to_string()),
+   },Recipe {
+    name: "Pancakes".to_string(),
+   diners: 4,
+   ingredients: vec![
+      RecipeIngredient {
+          name: "Flour".to_string(),
+          quantity: 200,
+          unit: IngredientUnit::Grams,
+      }
+   ],
+   steps : Steps::Text("Mix everything together".to_string()),
+   image: Some("pancakes.jpg".to_string()),
+},];
 
     RecipesTemplate {recipes}
 }

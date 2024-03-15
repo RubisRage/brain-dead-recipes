@@ -1,4 +1,5 @@
 use askama::Template;
+use crate::Recipe;
 
 #[derive(Template)]
 #[template(path = "index.html")]
@@ -14,6 +15,6 @@ pub struct RecipeForm {
 #[derive(Template)]
 #[template(path = "recipe_view.html")]
 pub struct RecipesTemplate {
-    pub recipes: Vec<String>,
+    pub recipes: Vec<Recipe>,
 }
 

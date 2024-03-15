@@ -5,9 +5,10 @@
 {% block content %}
 
 
-<main>
+<main class="bg-gray-400 p-2 grid gap-2 grid-cols-5">
+    <div> cuadro crear recetas</div>
     {% for recipe in recipes %}
-        <div> {{ recipe }} </div>
+        <div> {{ recipe.name }} </div>
     {% endfor %}
 </main>
 
