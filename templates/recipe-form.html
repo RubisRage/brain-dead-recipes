@@ -7,21 +7,21 @@
 {% include "ingredient-input.html" %}
 
 <main class="flex h-svh justify-center">
-    <form hx-post="/recipe" class="flex flex-col w-1/2 gap-4 sm:max-w-md">
+    <form hx-post="/recipe/new" hx-params="not steps-type" enctype="multipart/form-data" autocomplete="off" class="flex flex-col w-1/2 gap-4 sm:max-w-md">
         <div class="sm:col-span-4">
-            <label for="recipe-name" class="block text-sm font-medium leading-6 text-gray-900">Nombre de la receta</label>
+            <label for="name" class="block text-sm font-medium leading-6 text-gray-900">Nombre de la receta</label>
             <div class="mt-2">
                 <div class="flex rounded-md shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-inset focus-within:ring-indigo-600 sm:max-w-md">
-                  <input type="text" name="recipe-name" id="recipe-name" required class="block flex-1 border-0 bg-transparent py-1.5 pl-1 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm sm:leading-6">
+                  <input type="text" name="name" id="name" required class="block flex-1 border-0 bg-transparent py-1.5 pl-1 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm sm:leading-6">
                 </div>
             </div>
         </div>
 
         <div class="sm:col-span-4">
-            <label for="diners-number" class="block text-sm font-medium leading-6 text-gray-900">Número de comensales</label>
+            <label for="rations" class="block text-sm font-medium leading-6 text-gray-900">Número de raciones</label>
             <div class="mt-2">
                 <div class="flex rounded-md shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-inset focus-within:ring-indigo-600 sm:max-w-md">
-                  <input type="number" name="diners-number" id="diners-number" value="1" class="block flex-1 border-0 bg-transparent py-1.5 pl-1 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm sm:leading-6">
+                  <input type="number" name="rations" id="rations" value="1" class="block flex-1 border-0 bg-transparent py-1.5 pl-1 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm sm:leading-6">
                 </div>
             </div>
         </div>
@@ -40,14 +40,20 @@
             </div>
         </div>
 
+
         <div class="sm:col-span-4">
-            <label for="recipe-steps" class="block text-sm font-medium leading-6 text-gray-900">Pasos</label>
-            <div class="mt-2">
-                <div class="flex rounded-md shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-inset focus-within:ring-indigo-600 sm:max-w-md">
-                  <textarea name="recipe-steps" id="recipe-steps" required class="block flex-1 border-0 bg-transparent py-1.5 pl-1 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm sm:leading-6"></textarea>
-                </div>
-            </div>
+            <label for="steps-type" class="block text-sm font-medium leading-6 text-gray-900">¿Cómo quieres especificar tú receta?</label>
+            <select hx-get="/recipe/type" hx-target="#steps" hx-swap="innerHtml" hx-params="steps-type"  name="steps-type" selected="Text" class="w-28 col-span-2 row-start-2 h-7 p-0 ring-1 ring-inset ring-gray-300 pl-1 border-0 rounded-md shadow-sm focus-within:ring-2 focus-within:ring-indigo-600 ">
+                <option value="Text">Texto</option>
+                <option value="Url">Enlace</option>
+                <option value="Image">Imagen</option>
+            </select>
         </div>
+
+        <div id="steps">
+            {{ steps|safe }}
+        </div>
+
 
         <button type="submit" class="h-10 bg-indigo-600 text-white rounded-md shadow-sm">Crear receta</button>
     </form>

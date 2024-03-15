@@ -1,0 +1,42 @@
+
+{% match self %}
+  {% when Self::Text %}
+    {% call text() %}
+  {% when Self::Url %}
+    {% call url() %}
+  {% when Self::Image %}
+    {% call image() %}
+{% endmatch %}
+
+{% macro text() %}
+    <div class="sm:col-span-4">
+        <label for="Text" class="block text-sm font-medium leading-6 text-gray-900">Pasos</label>
+        <div class="mt-2">
+            <div class="flex rounded-md shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-inset focus-within:ring-indigo-600 sm:max-w-md">
+                <textarea name="Text" placeholder="" required class="block flex-1 h-40 border-0 bg-transparent py-1.5 pl-1 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm sm:leading-6"></textarea>
+            </div>
+        </div>
+    </div>
+{% endmacro %}
+
+{% macro url() %}
+    <div class="sm:col-span-4">
+        <label for="Url" class="block text-sm font-medium leading-6 text-gray-900">Enlace</label>
+        <div class="mt-2">
+            <div class="flex rounded-md shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-inset focus-within:ring-indigo-600 sm:max-w-md">
+                <input type="text" name="Url" id="Url" required class="block flex-1 border-0 bg-transparent py-1.5 pl-1 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm sm:leading-6">
+            </div>
+        </div>
+    </div>
+{% endmacro %}
+
+{% macro image() %}
+    <div class="sm:col-span-4">
+        <label for="url" class="block text-sm font-medium leading-6 text-gray-900">Imagen</label>
+        <div class="mt-2">
+            <div class="flex rounded-md shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-inset focus-within:ring-indigo-600 sm:max-w-md">
+                <input type="file" name="Image" id="image" placeholder="Subir imagen" required class="block flex-1 border-0 bg-transparent py-1.5 pl-1 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm sm:leading-6">
+            </div>
+        </div>
+    </div>
+{% endmacro %}
