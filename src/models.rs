@@ -2,10 +2,10 @@ use serde::{Deserialize, Serialize};
 
 pub struct Recipe {
     name: String,
-    diners: u32,
+    thumbnail: Option<String>,
+    rations: u32,
     ingredients: Vec<RecipeIngredient>,
     steps: Steps,
-    image: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
