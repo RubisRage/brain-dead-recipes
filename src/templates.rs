@@ -24,7 +24,7 @@ pub enum StepsPartial {
 }
 
 #[derive(Template)]
-#[template(path = "recipe_view.html")]
+#[template(path = "recipe-view.html")]
 pub struct RecipesTemplate {
     pub recipes: Vec<Recipe>,
 }

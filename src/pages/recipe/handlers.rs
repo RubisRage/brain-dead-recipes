@@ -2,7 +2,7 @@ use super::extract::{RecipeCreationRequest, StepsPart};
 use super::AppError;
 use crate::{
     models::Steps,
-    templates::{NewRecipeForm, StepsPartial},
+    templates::{NewRecipeForm, StepsPartial, RecipesTemplate},
 };
 use askama_axum::IntoResponse;
 use axum::{
@@ -105,8 +105,14 @@ async fn steps_type(
     response
 }
 
+
+async fn recipes_view() -> RecipesTemplate {
+    todo!("crear template con array de recetas");
+}
+
 pub fn routes() -> Router<SqlitePool> {
     Router::new()
         .route("/new", get(new_recipe_form).post(create_recipe))
         .route("/type", get(steps_type))
+        .route("/view", get(recipes-view))
 }

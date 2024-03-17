@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %} Recipes {% endblock %}
+
+{% block content %}
+
+
+<main class="bg-gray-400 p-2 grid gap-2 grid-cols-5">
+
+    <div class="bg-cover bg-center box-border bg-gray-900 flex-col font-medium font-serif m-4 p-4" style="background-image: url('/images/add.img');">
+        <a href="/recipe/new" >
+            create new recipe
+        </a>
+
+    </div>
+
+    {% for recipe in recipes %}
+        
+        <div class="box-border bg-gray-900 flex-col font-medium font-serif m-4 p-4">
+
+            {% if let Some(thumbnail) = recipe.thumbnail %} 
+                <img src="/images/{{thumbnail}}" alt="Imagen de la receta {{recipe.name}}">
+            {% else %}
+                <img src="/images/default.jpg" alt="Imagen de la receta {{recipe.name}}">
+            {% endif %}
+
+            <p>
+                <a href="/{{recipe.name}}"> {{ recipe.name }} </a>
+            </p> 
+
+        </div>
+    {% endfor %}
+
+</main>
+
+{% endblock %}
