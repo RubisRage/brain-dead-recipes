@@ -18,16 +18,16 @@ values
 insert into recipe_ingredients
 (recipe_name, ingredient_name, quantity, unit)
 values
-('Pasta', 'flour', 200, 'Grams');
+('Pasta', 'flour', 200, 'grams');
 
 insert into recipe_ingredients
 (recipe_name, ingredient_name, quantity, unit)
 values
-('Pasta', 'Eggs', 5, 'Units');
+('Pasta', 'Eggs', 5, 'units');
 
 insert into recipe_ingredients
 (recipe_name, ingredient_name, quantity, unit)
 values
-('Pasta', 'Milk', 500, 'Grams');
+('Pasta', 'Milk', 500, 'grams');
 
 

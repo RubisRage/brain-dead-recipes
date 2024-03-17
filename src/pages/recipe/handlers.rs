@@ -1,8 +1,9 @@
 use super::extract::{RecipeCreationRequest, StepsPart};
 use super::AppError;
+use crate::models::{Recipe, RecipeIngredient};
 use crate::{
     models::Steps,
-    templates::{NewRecipeForm, StepsPartial, RecipesTemplate},
+    templates::{NewRecipeForm, RecipesTemplate, StepsPartial},
 };
 use anyhow::anyhow;
 use askama_axum::IntoResponse;
@@ -117,14 +118,47 @@ async fn steps_type(
     response
 }
 
+async fn recipes_view(
+    State(db): State<SqlitePool>,
+) -> Result<RecipesTemplate, AppError> {
+    let rows = sqlx::query!(
+        r#"
+        SELECT name, thumbnail, rations, steps FROM recipes
+        "#,
+    )
+    .fetch_all(&db)
+    .await?;
 
-async fn recipes_view() -> RecipesTemplate {
-    todo!("crear template con array de recetas");
+    let mut recipes = Vec::with_capacity(rows.len());
+
+    for row in rows {
+        let ingredients = sqlx::query_as(
+            r#"
+            SELECT ingredient_name, quantity, unit, recipe_name
+            FROM recipe_ingredients
+            WHERE recipe_name = ?
+            "#,
+        )
+        .bind(&row.name)
+        .fetch_all(&db)
+        .await?;
+
+        recipes.push(Recipe {
+            name: row.name,
+            thumbnail: row.thumbnail,
+            rations: row.rations as u32,
+            steps: serde_json::from_str(&row.steps)
+                .expect("json stored in db should be valid"),
+            ingredients,
+        });
+    }
+
+    Ok(RecipesTemplate { recipes })
 }
 
 pub fn routes() -> Router<SqlitePool> {
     Router::new()
         .route("/new", get(new_recipe_form).post(create_recipe))
         .route("/type", get(steps_type))
-        .route("/view", get(recipes-view))
+        .route("/view", get(recipes_view))
 }

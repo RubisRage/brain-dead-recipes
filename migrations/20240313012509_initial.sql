@@ -1,7 +1,7 @@
 -- Add migration script here
 
 create table if not exists recipes (
-    name text primary key,
+    name text not null primary key,
     thumbnail text,
     rations integer not null,
     steps text not null
