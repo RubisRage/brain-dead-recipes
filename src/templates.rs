@@ -1,6 +1,8 @@
 use askama_axum::Template;
 use serde::Deserialize;
 
+use crate::models::Recipe;
+
 #[derive(Template)]
 #[template(path = "index.html")]
 pub struct Index {}
@@ -21,10 +23,8 @@ pub enum StepsPartial {
     Image,
 }
 
-
 #[derive(Template)]
 #[template(path = "recipe_view.html")]
 pub struct RecipesTemplate {
     pub recipes: Vec<Recipe>,
 }
-
