@@ -13,6 +13,7 @@ use serde::Deserialize;
 pub struct RecipeCreationRequest {
     pub name: String,
     pub rations: u32,
+    pub thumbnail: Option<(Bytes, String)>,
     pub ingredients: Vec<RecipeIngredientPart>,
     pub steps: StepsPart,
 }
@@ -47,6 +48,7 @@ where
 
         let mut name = None;
         let mut rations = None;
+        let mut thumbnail = None;
         let mut ingredients = vec![];
         let mut steps = None;
 
@@ -58,6 +60,17 @@ where
             }
         };
 
+        let mut get_extension = |ct: &str| -> Result<String, AppError> {
+            let (_, extension) = if ct == "image/jpeg" {
+                ct.split_once('/')
+                    .expect("/ should be present on valid content types")
+            } else {
+                return Err(anyhow!("invalid content type").into());
+            };
+
+            Ok(extension.to_string())
+        };
+
         while let Some(field) = body.next_field().await? {
             match field.name() {
                 Some("name") => {
@@ -66,6 +79,17 @@ where
 
                 Some("rations") => {
                     rations = Some(field.text().await?.parse::<u32>()?);
+                }
+
+                Some("thumbnail") => {
+                    let content_type = field
+                        .content_type()
+                        .context("content type not present")?
+                        .to_string();
+
+                    let extension = get_extension(&content_type)?;
+
+                    thumbnail = Some((field.bytes().await?, extension));
                 }
 
                 Some("ingredients[]") => ingredients
@@ -86,17 +110,11 @@ where
                         .to_string();
 
                     // TODO Check for other valid image types
-                    let (_, extension) = if content_type == "image/jpeg" {
-                        content_type.split_once('/').expect(
-                            "/ should be present on valid content types",
-                        )
-                    } else {
-                        return Err(anyhow!("invalid content type").into());
-                    };
+                    let extension = get_extension(&content_type)?;
 
                     set_steps(StepsPart::Image(
                         field.bytes().await?,
-                        extension.to_string(),
+                        extension,
                     ))?;
                 }
 
@@ -109,6 +127,7 @@ where
             Ok(RecipeCreationRequest {
                 name,
                 rations,
+                thumbnail,
                 steps,
                 ingredients,
             })

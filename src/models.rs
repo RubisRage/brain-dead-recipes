@@ -1,11 +1,11 @@
 use serde::{Deserialize, Serialize};
 
 pub struct Recipe {
-    pub name: String,
-    pub diners: u32,
-    pub ingredients: Vec<RecipeIngredient>,
-    pub steps: Steps,
-    pub image: Option<String>,
+    name: String,
+    thumbnail: Option<String>,
+    rations: u32,
+    ingredients: Vec<RecipeIngredient>,
+    steps: Steps,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
