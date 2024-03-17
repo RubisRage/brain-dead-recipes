@@ -2,7 +2,7 @@
 
 create table if not exists recipes (
     name text primary key,
-    image text,
+    thumbnail text,
     rations integer not null,
     steps text not null
 );

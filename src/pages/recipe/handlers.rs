@@ -4,7 +4,9 @@ use crate::{
     models::Steps,
     templates::{NewRecipeForm, StepsPartial},
 };
+use anyhow::anyhow;
 use askama_axum::IntoResponse;
+use axum::body::Bytes;
 use axum::{
     extract::State, http::HeaderValue, response::Redirect, routing::get, Router,
 };
@@ -18,25 +20,31 @@ async fn create_recipe(
     req: RecipeCreationRequest,
 ) -> Result<Redirect, AppError> {
     let name = lorust::kebab_case(req.name);
-    let image: Option<String> = None;
     let rations = req.rations;
     let (steps, bytes) = match req.steps {
         StepsPart::Text(text) => (Steps::Text(text), None),
         StepsPart::Url(url) => (Steps::Url(url), None),
-        StepsPart::Image(bytes, extension) => {
-            (Steps::Image(format!("{}.{}", name, extension)), Some(bytes))
-        }
+        StepsPart::Image(bytes, extension) => (
+            Steps::Image(format!("{}-step.{}", name, extension)),
+            Some(bytes),
+        ),
     };
+
+    let (thumbnail_bytes, thumbnail_name) =
+        req.thumbnail.map_or((None, None), |(bytes, extension)| {
+            let name = format!("{}.{}", name, extension);
+            (Some(bytes), Some(name))
+        });
 
     let mut tx = db.begin().await.unwrap();
     let steps_serialized = json!(steps);
 
     sqlx::query!(
         r#"
-        INSERT INTO recipes (name, image, rations, steps) VALUES (?, ?, ?, ?)
+        INSERT INTO recipes (name, thumbnail, rations, steps) VALUES (?, ?, ?, ?)
         "#,
         name,
-        image,
+        thumbnail_name,
         rations,
         steps_serialized
     )
@@ -60,13 +68,17 @@ async fn create_recipe(
         .await?;
     }
 
+    if let (Some(filename), Some(bytes)) = (thumbnail_name, thumbnail_bytes) {
+        tokio::fs::write(format!("images/{filename}"), bytes).await?;
+    }
+
     if let (Steps::Image(filename), Some(bytes)) = (steps, bytes) {
         tokio::fs::write(format!("images/{filename}"), bytes).await?;
     }
 
     tx.commit().await?;
 
-    Ok(Redirect::to("/recipe/list"))
+    Ok(Redirect::to("/recipe/view"))
 }
 
 #[axum::debug_handler]
