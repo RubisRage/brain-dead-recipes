@@ -22,7 +22,6 @@ impl Default for Steps {
 }
 
 #[derive(Deserialize, Debug)]
-//#[serde(try_from = "String")]
 pub struct RecipeIngredient {
     pub recipe_name: String,
     pub quantity: u32,
@@ -34,6 +33,20 @@ pub struct RecipeIngredient {
 pub enum IngredientUnit {
     Grams,
     Units,
+}
+
+#[derive(sqlx::FromRow, Deserialize, Debug)]
+pub struct Ingredient {
+    pub name: String,
+    pub diet: Diet,
+}
+
+#[derive(sqlx::Type, Debug, Deserialize)]
+pub enum Diet {
+    Vegan,
+    Vegetarian,
+    Fish,
+    Meat,
 }
 
 impl TryFrom<String> for RecipeIngredient {

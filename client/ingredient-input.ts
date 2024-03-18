@@ -1,4 +1,4 @@
-
+import { openDialog } from './ingredient-dialog';
 
 export default class IngredientInput extends HTMLElement {
     static formAssociated = true;
@@ -6,7 +6,7 @@ export default class IngredientInput extends HTMLElement {
     private shadow: ShadowRoot;
     private internals: ElementInternals;
 
-    private ingredients: HTMLInputElement[];
+    private ingredients: HTMLElement[];
 
     private filterInput: HTMLInputElement;
     private quantityInput: HTMLInputElement;
@@ -41,37 +41,31 @@ export default class IngredientInput extends HTMLElement {
             'input', () => this.filterIngredients()
         );
 
-        const ingredientsContent = document
-            .querySelector<HTMLTemplateElement>('#ingredients-template')
-            .content
-            .cloneNode(true) as HTMLElement;
-
-        this.ingredients = Array.from(
-            ingredientsContent.children as HTMLCollectionOf<HTMLInputElement>
-        );
-
-        this.ingredients
-            .forEach((ingredient) => {
-                ingredient
-                    .querySelector<HTMLButtonElement>('button')
-                    .addEventListener('click', (e) => this.setIngredient(e))
-            })
+        this.ingredientsSelect = this.shadow.querySelector('#ingredients-select')
 
         this.selectedText = this.shadow.querySelector('#selected')
+
+        this.loadIngredients();
 
         this.selectedText.innerText = this
             .ingredients[0]
             ?.innerText.trim() ?? "No hay ingredientes todavía!"
 
-        this.ingredientsSelect = this.shadow.querySelector('#ingredients-select')
-        this.ingredientsSelect.append(...this.ingredients);
+        this.markSelected()
+
+        this.shadow
+            .querySelector('#create-ingredient')
+            .addEventListener('click', () => {
+                this.hideMenu()
+                openDialog()
+            })
 
         this.addVisibilityCallbacks()
     }
 
     private addVisibilityCallbacks() {
         this.selectedText.addEventListener('focus', () => {
-            this.selectMenu.style.display = 'block';
+            this.selectMenu.classList.remove('hidden');
         })
 
         this.selectedText.addEventListener('blur', (e: any) => {
@@ -88,7 +82,7 @@ export default class IngredientInput extends HTMLElement {
     }
 
     private hideMenu() {
-        this.selectMenu.style.display = 'none';
+        this.selectMenu.classList.add('hidden');
         this.filterInput.value = "";
         this.ingredientsSelect.replaceChildren(...this.ingredients);
     }
@@ -144,6 +138,47 @@ export default class IngredientInput extends HTMLElement {
     get type() {
         return this.localName;
     }
+
+    loadIngredients() {
+        const ingredientsContent = document
+            .querySelector('#ingredients-template')
+            .cloneNode(true) as HTMLDivElement;
+
+        this.ingredients = Array.from(
+            ingredientsContent.children as HTMLCollectionOf<HTMLElement>
+        );
+
+        this.ingredients
+            .forEach((ingredient) => {
+                ingredient
+                    .querySelector<HTMLButtonElement>('button')
+                    .addEventListener('click', (e) => this.setIngredient(e))
+            })
+
+        this.ingredientsSelect.replaceChildren(...this.ingredients);
+    }
+
+    markSelected() {
+        const selected = this.selectedText.innerHTML.trim();
+
+        for (const ingredient of this.ingredients) {
+            const ingredientButton = ingredient.querySelector('button') as HTMLButtonElement;
+            if (ingredientButton.innerText.trim() === selected) {
+                ingredientButton.classList.add('selected');
+            }
+        }
+    }
 }
 
 customElements.define('ingredient-input', IngredientInput);
+
+function updateIngredientInputs() {
+    const ingredientInputs = document.querySelectorAll<IngredientInput>('ingredient-input');
+
+    for (const ingredientInput of ingredientInputs) {
+        ingredientInput.loadIngredients();
+        ingredientInput.markSelected();
+    }
+}
+
+(window as any).updateIngredientInputs = updateIngredientInputs;

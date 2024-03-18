@@ -6,7 +6,8 @@
         <title>{% block title %}{% endblock %} - BrainDead Cooking</title>
         <link href="/assets/style.css" rel="stylesheet">
         <script src="https://unpkg.com/htmx.org/dist/htmx.js"></script>
-        <script defer src="/assets/bundle.js"></script>
+        <script src="https://unpkg.com/htmx.org@1.9.11/dist/ext/debug.js"></script>
+        <script defer type="text/javascript" src="/assets/bundle.js"></script>
     </head>
     <body hx-boost="true">
         {% block content %}

@@ -8,7 +8,7 @@ create table if not exists recipes (
 );
 
 create table if not exists ingredients (
-    name text primary key,
+    name text not null primary key,
     diet_type text not null
 );
 

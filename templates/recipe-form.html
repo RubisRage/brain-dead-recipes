@@ -2,9 +2,14 @@
 
 {% block title %} New recipe {% endblock %}
 
+{%- import "ingredient-input.html" as ingredient_input -%}
+
 {% block content %}
 
-{% include "ingredient-input.html" %}
+{% call ingredient_input::input_template() %} 
+{% call ingredient_input::ingredients_template(ingredients) %} 
+
+{% include "create-ingredient-dialog.html" %}
 
 <main class="flex h-svh justify-center">
     <form hx-post="/recipe/new" hx-params="not steps-type" enctype="multipart/form-data" autocomplete="off" class="flex flex-col w-1/2 gap-4 sm:max-w-md">

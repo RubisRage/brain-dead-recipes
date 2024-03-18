@@ -1,0 +1,20 @@
+<div id="ingredient-dialog" class="hidden absolute w-svw h-svh bg-gray-300 bg-opacity-60 z-50">
+<form hx-post="/recipe/ingredient" hx-target="#error" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 p-4 max-w-2xl w-2/3  bg-white rounded-md ring-1 ring-inset ring-indigo-600" >
+    <div class="grid  grid-cols-1 sm:grid-cols-[1fr_.5fr] gap-4 items-center">
+        <div class="flex rounded-md h-10 shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-inset focus-within:ring-indigo-600 sm:max-w-md">
+          <input type="text" name="name" id="name" placeholder="Nombre del ingrediente" required class="block flex-1 border-0 bg-transparent py-1.5 pl-1 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm sm:leading-6">
+        </div>
+
+        <select name="diet" class="p-0 w-full h-10 ring-1 ring-inset ring-gray-300 pl-1 border-0 rounded-md shadow-sm focus-within:ring-2 focus-within:ring-indigo-600">
+            <option value="Vegetarian">Vegetarian</option>
+            <option value="Vegan">Vegan</option>
+            <option value="Fish">Fish</option>
+            <option value="Meat">Meat</option>
+        </select>
+
+        <button type="submit" class="h-10 bg-indigo-600 text-white rounded-md shadow-sm sm:max-w-md">Crear ingrediente</button>
+
+    </div>
+    <div id="error" class=" bg-red-500 text-white rounded-md"></div> 
+</form>
+</div>
