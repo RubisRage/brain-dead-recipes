@@ -1,12 +1,13 @@
 use super::extract::{RecipeCreationRequest, StepsPart};
 use super::AppError;
-use crate::models::Ingredient;
-use crate::templates::IngredientsList;
+use crate::models::{Ingredient, Recipe, RecipeIngredient};
+use crate::templates::{self, IngredientsList, RecipeTemplate};
 use crate::{
     models::Steps,
     templates::{NewRecipeForm, StepsPartial},
 };
 use askama_axum::IntoResponse;
+use axum::extract::Path;
 use axum::http::StatusCode;
 use axum::Form;
 use axum::{
@@ -151,7 +152,6 @@ async fn new_ingredient(
     }
 }
 
-#[axum::debug_handler]
 async fn list_ingredients(State(db): State<SqlitePool>) -> IngredientsList {
     let ingredients = sqlx::query_as(
         r#"
@@ -167,8 +167,44 @@ async fn list_ingredients(State(db): State<SqlitePool>) -> IngredientsList {
     IngredientsList { ingredients }
 }
 
+#[axum::debug_handler]
+async fn get_recipe(
+    State(db): State<SqlitePool>,
+    Path(recipe_id): Path<String>,
+) -> Result<RecipeTemplate, AppError> {
+    let recipe = sqlx::query!(
+        r#"SELECT name, thumbnail, rations, steps FROM recipes WHERE name = ?"#,
+        recipe_id
+    )
+    .fetch_one(&db)
+    .await?;
+
+    let ingredients = sqlx::query_as(
+        r#"
+            SELECT ingredient_name, quantity, unit, recipe_name
+            FROM recipe_ingredients
+            WHERE recipe_name = ?
+        "#,
+    )
+    .bind(&recipe_id)
+    .fetch_all(&db)
+    .await?;
+
+    Ok(RecipeTemplate {
+        recipe: Recipe {
+            name: recipe.name,
+            thumbnail: recipe.thumbnail,
+            rations: recipe.rations as u32,
+            ingredients,
+            steps: serde_json::from_str(&recipe.steps)
+                .expect("JSON stored in db must be valid"),
+        },
+    })
+}
+
 pub fn routes() -> Router<SqlitePool> {
     Router::new()
+        .route("/:recipe-id", get(get_recipe))
         .route("/new", get(new_recipe_form).post(create_recipe))
         .route("/type", get(steps_type))
         .route("/ingredient", get(list_ingredients).post(new_ingredient))

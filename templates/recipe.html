@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block title %} {{ recipe.name|capitalize }} {% endblock %}
+
+
+{% block content %}
+
+{% let thumbnail = recipe.thumbnail.clone().unwrap_or("default.jpg".to_string()) %}
+
+<main>
+    <h1>{{ recipe.name|capitalize }}</h1>
+    <img src="/images/{{ thumbnail }}" alt="{{ recipe.name }}'s thumbnail" class="w-full h-full">
+
+</main>
+
+{% endblock %}
