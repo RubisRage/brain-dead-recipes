@@ -1,0 +1,26 @@
+
+
+{% macro edit_name() %}
+    <div hx-put="/recipe/{{ recipe_name }}/name" class="flex gap-4">
+        <input type="text" name="name" id="name" class="block w-80 m-0 flex-1 border-0 bg-white py-1.5 pl-1 text-gray-900 placeholder:text-gray-400 focus:outline-0 sm:text-sm sm:leading-6 h-12 rounded-md shadow-sm outline-1 outline-inset outline-gray-300 focus-within:outline-2 focus-within:outline-inset focus-within:outline-indigo-600 sm:max-w-md">
+        <button class="flex justify-center items-center w-10 rounded bg-indigo-600">
+            <svg class="stroke-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="1.5rem" height="1.5rem" fill="none" stroke="black" stroke-width="2">
+              <path d="M5 13l4 4L19 7"></path>
+            </svg>
+        </button>
+        <button 
+            hx-get="/recipe/{{ recipe_name }}/name"
+            class="flex justify-center items-center w-10 rounded bg-red-500"
+            >
+            <svg class="stroke-white fill-white" height="16" viewBox="0 0 16 16" width="16" xmlns="http://www.w3.org/2000/svg">
+                <polygon fill-rule="evenodd" points="8 9.414 3.707 13.707 2.293 12.293 6.586 8 2.293 3.707 3.707 2.293 8 6.586 12.293 2.293 13.707 3.707 9.414 8 13.707 12.293 12.293 13.707 8 9.414"/>
+            </svg>
+        </button>
+    </div>
+{% endmacro %}
+
+{% macro edit_rations() %}
+{% endmacro %}
+
+{% macro edit_ingredient() %}
+{% endmacro %}

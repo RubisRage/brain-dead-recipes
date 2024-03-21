@@ -9,13 +9,25 @@
 
 <main>
     <header class="flex h-56  bg-indigo-100 border-b border-indigo-300 gap-10 p-4 mb-4 items-center">
-        <img src="/images/{{ thumbnail }}" alt="{{ recipe.name }}'s thumbnail" class="h-[calc(100%_-_1rem)] w-auto">
-            <h1 class="group text-7xl hover:bg-indigo-200 p-4 rounded-md">
-                <span>{{ recipe.name|capitalize }}</span>
-                <button class="invisible group-hover:visible">
-                    {% call edit_icon(width="w-auto", height="h-14") %}
+        <div class="group relative h-[calc(100%_-_1rem)] flex ">
+            <img class="h-full" src="/images/{{ thumbnail }}" alt="{{ recipe.name }}'s thumbnail">
+            <div class="invisible group-hover:visible z-50 w-full h-full absolute top-0 left-0 bg-black bg-opacity-40 flex justify-center">
+                <button >
+                    {% call edit_icon(class="w-auto h-14 stroke-white") %}
                 </button>
-            </h1>
+            </div>
+        </div>
+        <h1 class="group text-7xl hover:bg-indigo-200 p-4 rounded-md">
+            <span>{{ recipe.name|capitalize }}</span>
+            <button 
+                hx-get="/recipe/{{ recipe.name }}/name" 
+                hx-target="closest h1"
+                hx-swap="outerHTML"
+                class="invisible group-hover:visible"
+                >
+                {% call edit_icon(class="w-auto h-14 stroke-black") %}
+            </button>
+        </h1>
     </header>
 
     <section class="group h-14 w-fit gap-4 flex p-2 ml-4 mb-4 hover:bg-gray-50">
@@ -27,7 +39,7 @@
             {{ recipe.rations }}
         </span>
         <button class="invisible group-hover:visible">
-            {% call edit_icon(width="w-auto", height="h-5/6") %}
+            {% call edit_icon(class="w-auto h-5/6 stroke-black") %}
         </button>
     </section>
 
@@ -43,7 +55,7 @@
                             {% call units(ingredient.unit) %}
                         </span>
                         <button class="invisible group-hover:visible">
-                            {% call edit_icon(width="w-auto", height="h-5/6") %}
+                            {% call edit_icon(class="w-auto h-5/6 stroke-black") %}
                         </button>
                     </li>
                 {% endfor %}
@@ -58,10 +70,10 @@
 
 {% endblock %}
 
-{% macro edit_icon(width, height) %}
-<svg class="{{width}} {{height}}" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
+{% macro edit_icon(class) %}
+<svg class="{{class}}" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
         <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-    </svg>
+</svg>
 {% endmacro %}
 
 {% macro units(unit) %}

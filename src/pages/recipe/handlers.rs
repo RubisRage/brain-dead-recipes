@@ -1,7 +1,7 @@
 use super::extract::{RecipeCreationRequest, StepsPart};
 use super::AppError;
 use crate::models::{Ingredient, Recipe, RecipeIngredient};
-use crate::templates::{self, IngredientsList, RecipeTemplate};
+use crate::templates::{self, EditRecipeName, IngredientsList, RecipeTemplate};
 use crate::{
     models::Steps,
     templates::{NewRecipeForm, StepsPartial},
@@ -9,6 +9,7 @@ use crate::{
 use askama_axum::IntoResponse;
 use axum::extract::Path;
 use axum::http::StatusCode;
+use axum::routing::put;
 use axum::Form;
 use axum::{
     extract::State,
@@ -202,10 +203,17 @@ async fn get_recipe(
     })
 }
 
+async fn edit_name(Path(recipe_id): Path<String>) -> EditRecipeName {
+    EditRecipeName {
+        recipe_name: recipe_id,
+    }
+}
+
 pub fn routes() -> Router<SqlitePool> {
     Router::new()
         .route("/:recipe-id", get(get_recipe))
         .route("/new", get(new_recipe_form).post(create_recipe))
         .route("/type", get(steps_type))
+        .route("/:recipe-id/name", get(edit_name))
         .route("/ingredient", get(list_ingredients).post(new_ingredient))
 }
